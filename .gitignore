@@ -1,0 +1,13 @@
+# Carpeta de configuración de Visual Studio
+.vs/
+
+# Carpetas de compilación
+[Bb]in/
+[Oo]bj/
+
+# Archivos de opciones de usuario
+*.suo
+*.user
+
+# Archivos de caché
+*.nupkg
