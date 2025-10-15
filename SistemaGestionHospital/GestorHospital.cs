@@ -17,6 +17,19 @@ namespace SistemaGestionHospital
         // 3 cola dedicada para emergencias
         private Queue<Paciente> colaEmergencias;
 
+        // lectura segura de las claves (los nombres de las especialidades) desde fuera de la clase
+        public List<string> ObtenerEspecialidades()
+        {
+            // Devolvemos una nueva lista con las claves del diccionario.
+            return new List<string>(colasPorEspecialidad.Keys);
+        }
+
+        // lectura segura de la lista maestra de pacientes desde fuera de la clase
+        public List<Paciente> ObtenerPacientesRegistrados()
+        {
+            return listaMaestraPacientes;
+        }
+
         // --- CONSTRUCTOR ---
         // este metodo se ejecuta automaticamente al crear un objeto GestorHospital
         public GestorHospital()
@@ -65,37 +78,38 @@ namespace SistemaGestionHospital
             return true;
         }
 
-        // encontrar un paciente por DUI y añadirlo a la cola correcta
-        public string AsignarPacienteACola(string duiPaciente, string especialidad)
+        // metodo encontrar un paciente por DUI y añadirlo a la cola correcta
+        public string AsignarPacienteACola(Paciente paciente, string especialidad)
         {
-            // 1 buscamos al paciente en la lista maestra
-            Paciente pacienteEncontrado = null; // variable para guardar el paciente si lo encontramos
-            foreach (Paciente p in listaMaestraPacientes)
+            // 1 validamos que el paciente no sea nulo
+            if (paciente == null)
             {
-                if (p.DUI == duiPaciente)
-                {
-                    pacienteEncontrado = p;
-                    break; // rompemos el bucle porque ya lo encontramos
-                }
+                return "Error: No se ha seleccionado ningún paciente.";
             }
 
-            // 2 validamos si encontramos al paciente
-            if (pacienteEncontrado == null)
-            {
-                return "Error: Paciente con DUI " + duiPaciente + " no encontrado.";
-            }
-
-            // 3 validamos si la especialidad existe en nuestro diccionario
+            // 2 validamos si la especialidad existe
             if (!colasPorEspecialidad.ContainsKey(especialidad))
             {
                 return "Error: La especialidad '" + especialidad + "' no existe.";
             }
 
-            // 4 si todo es correcto, añadimos el paciente a la cola correspondiente
-            colasPorEspecialidad[especialidad].Enqueue(pacienteEncontrado);
+            // 3 di todo es correcto, añadimos el paciente a la cola
+            colasPorEspecialidad[especialidad].Enqueue(paciente);
 
-            // 5 devolvemos un mensaje de exito
-            return "Paciente " + pacienteEncontrado.NombreCompleto + " asignado a la cola de " + especialidad + ".";
+            // 4 devolvemos un mensaje de exito
+            return "Paciente " + paciente.NombreCompleto + " asignado a la cola de " + especialidad + ".";
+        }
+
+        // metodo para manejar emergencias
+        public string AsignarPacienteAEmergencia(Paciente paciente)
+        {
+            if (paciente == null)
+            {
+                return "Error: No se ha seleccionado ningún paciente.";
+            }
+
+            colaEmergencias.Enqueue(paciente);
+            return "Paciente " + paciente.NombreCompleto + " asignado a la cola de EMERGENCIAS.";
         }
 
         // atender al proximo paciente, dando prioridad a emergencias
@@ -120,6 +134,21 @@ namespace SistemaGestionHospital
             // 3 si llegamos hasta aqui, significa que no habia nadie en ninguna cola relevante
             // retornamos null para indicar que no hay pacientes en espera
             return null;
+        }
+
+        // metodo para obtener el estado actual de todas las colas
+        public Dictionary<string, int> ObtenerEstadoDeColas()
+        {
+            var estado = new Dictionary<string, int>();
+            // agregamos el conteo de la cola de emergencias primero.
+            estado.Add("EMERGENCIAS", colaEmergencias.Count);
+
+            // agregamos el conteo para cada especialidad.
+            foreach (var cola in colasPorEspecialidad)
+            {
+                estado.Add(cola.Key, cola.Value.Count);
+            }
+            return estado;
         }
     }
 }
